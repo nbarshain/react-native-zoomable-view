@@ -40,6 +40,7 @@ export interface ReactNativeZoomableViewProps extends ViewProps {
   pinchToZoomInSensitivity?: number;
   pinchToZoomOutSensitivity?: number;
   movementSensibility?: number;
+  movementDecayAfterShift?: boolean;
   longPressDuration?: number;
   visualTouchFeedbackEnabled?: boolean;
   style?: any;
