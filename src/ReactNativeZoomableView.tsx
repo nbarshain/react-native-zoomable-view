@@ -407,6 +407,8 @@ class ReactNativeZoomableView extends Component<
    * @private
    */
   _handlePanResponderEnd = (e, gestureState) => {
+    const { movementSensibility} = this.props;
+
     if (!this.gestureType) {
       this._resolveAndHandleTap(e);
     }
@@ -416,8 +418,8 @@ class ReactNativeZoomableView extends Component<
     this.lastGestureCenterPosition = null;
 
     getPanMomentumDecayAnim(this.panAnim, {
-      x: gestureState.vx / this.zoomLevel,
-      y: gestureState.vy / this.zoomLevel,
+      x: gestureState.vx / this.zoomLevel / movementSensibility,
+      y: gestureState.vy / this.zoomLevel / movementSensibility,
     }).start();
 
     if (this.longPressTimeout) {
