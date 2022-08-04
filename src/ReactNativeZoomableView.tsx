@@ -80,6 +80,20 @@ class ReactNativeZoomableView extends Component<
       boundaryCrossedAnimInEffect: false,
     },
   };
+  private __distances = {
+    left: {
+      value: 0,
+    },
+    right: {
+      value: 0,
+    },
+    top: {
+      value: 0,
+    },
+    bottom: {
+      value: 0,
+    },
+  };
 
   private zoomLevel = 1;
   private lastGestureCenterPosition: { x: number; y: number } = null;
@@ -139,6 +153,8 @@ class ReactNativeZoomableView extends Component<
     this.zoomLevel = props.initialZoom;
     this.offsetX = props.initialOffsetX;
     this.offsetY = props.initialOffsetY;
+    this.distanceLeft = 0;
+    this.distanceTop = 0;
 
     this.panAnim.setValue({ x: this.offsetX, y: this.offsetY });
     this.zoomAnim.setValue(this.zoomLevel);
@@ -218,6 +234,39 @@ class ReactNativeZoomableView extends Component<
     return this.__offsets[axis].value;
   }
 
+  private set distanceLeft(left: number) {
+    this.__setDistance('left', left);
+  }
+  private set distanceRight(right: number) {
+    this.__setDistance('right', right);
+  }
+  private set distanceTop(top: number) {
+    this.__setDistance('top', top);
+  }
+  private set distanceBottom(bottom: number) {
+    this.__setDistance('bottom', bottom);
+  }
+  private get distanceLeft() {
+    return this.__getDistance('left');
+  }
+  private get distanceRight() {
+    return this.__getDistance('right');
+  }
+  private get distanceTop() {
+    return this.__getDistance('top');
+  }
+  private get distanceBottom() {
+    return this.__getDistance('bottom');
+  }
+  private __setDistance(direction: 'left' | 'right' | 'top' | 'bottom', distance) {
+    const distanceState = this.__distances[direction];
+
+    distanceState.value = distance;
+  }
+  private __getDistance(direction: 'left' | 'right' | 'top' | 'bottom') {
+    return this.__distances[direction].value;
+  }
+
   componentDidUpdate(
     prevProps: ReactNativeZoomableViewProps,
     prevState: ReactNativeZoomableViewState
@@ -293,6 +342,10 @@ class ReactNativeZoomableView extends Component<
       zoomLevel: this.zoomLevel,
       offsetX: this.offsetX,
       offsetY: this.offsetY,
+      distanceLeft: this.distanceLeft,
+      distanceRight: this.distanceRight,
+      distanceTop: this.distanceTop,
+      distanceBottom: this.distanceBottom,
       originalHeight: this.state.originalHeight,
       originalWidth: this.state.originalWidth,
       originalPageX: this.state.originalPageX,
@@ -421,6 +474,16 @@ class ReactNativeZoomableView extends Component<
       this.longPressTimeout = null;
     }
 
+    const changeStateObj = this._bindOffsetValuesToBorders(
+      {
+        zoomLevel: this.zoomLevel,
+        lastMovePinch: true,
+        offsetX: this.offsetX,
+        offsetY: this.offsetY,
+      },
+      null,
+    );
+
     this.props.onPanResponderEnd?.(
       e,
       gestureState,
@@ -444,6 +507,84 @@ class ReactNativeZoomableView extends Component<
     this.gestureType = null;
     this.gestureStarted = false;
   };
+
+  /**
+   * Takes a single offset value and calculates the correct offset value within our view to make
+   *
+   * @param {'x'|'y'} axis
+   * @param {number} offsetValue
+   * @param {number} containerSize
+   * @param {number} elementSize
+   * @param {number} zoomLevel
+   *
+   * @returns {number}
+   */
+   _getBoundOffsetValue(
+    axis: 'x' | 'y',
+    offsetValue: number,
+    containerSize: number,
+    elementSize: number,
+    zoomLevel: number,
+  ): number {
+    const offsetFromZoom = (elementSize - containerSize) / 2 / zoomLevel;
+    const totalOffsetStart = offsetFromZoom - offsetValue;
+
+    if (axis === 'x') {
+      this.distanceLeft = totalOffsetStart;
+      // this.__setDistance('right', totalOffsetEnd);
+    } else {
+      this.distanceTop = totalOffsetStart;
+      // this.__setDistance('bottom', totalOffsetEnd);
+    }
+
+    return offsetValue;
+  }
+
+  /**
+   * Takes a change object (that is going to be used in setState) and makes sure offsetX and
+   * offsetY are within our view borders. If that is not the case, they will be corrected.
+   *
+   * @param changeObj the object that is going to be modified.
+   *    Needs to contain at least the following elements:
+   *    {
+   *      zoomLevel: numeric,
+   *      offsetX: numeric,
+   *      offsetY: numeric,
+   *    }
+   * @private
+   */
+   _bindOffsetValuesToBorders(changeObj, bindToBorders = null) {
+    // if bindToBorders is disabled -> nothing do here
+    if (bindToBorders === false || (bindToBorders === null && !this.props.bindToBorders)) {
+      return changeObj;
+    }
+
+    const { originalWidth, originalHeight } = this.state;
+
+    const currentElementWidth = originalWidth * changeObj.zoomLevel;
+    const currentElementHeight = originalHeight * changeObj.zoomLevel;
+
+    // make sure that view doesn't go out of borders
+    const offsetXBound = this._getBoundOffsetValue(
+      'x',
+      changeObj.offsetX,
+      originalWidth,
+      currentElementWidth,
+      changeObj.zoomLevel,
+    );
+    changeObj.offsetX = offsetXBound;
+
+    const offsetYBound = this._getBoundOffsetValue(
+      'y',
+      changeObj.offsetY,
+      originalHeight,
+      currentElementHeight,
+      changeObj.zoomLevel,
+    );
+    changeObj.offsetY = offsetYBound;
+
+    return changeObj;
+  }
 
   /**
    * Handles the actual movement of our pan responder
