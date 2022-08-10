@@ -532,23 +532,13 @@ class ReactNativeZoomableView extends Component<
     elementSize: number,
     zoomLevel: number,
   ): number {
-    console.log('\naxis', axis);
-
-    console.log(
-      'distanceToStart manual',
-        (elementSize - containerSize) / 2 /
-        zoomLevel - offsetValue,
-    );
-
     const offsetFromZoom = (elementSize - containerSize) / 2 / zoomLevel;
     const totalOffsetStart = offsetFromZoom - offsetValue;
 
     if (axis === 'x') {
-      console.log('setting distanceLeft', totalOffsetStart);
       this.distanceLeft = totalOffsetStart;
       // this.__setDistance('right', totalOffsetEnd);
     } else {
-      console.log('setting distanceTop', totalOffsetStart);
       this.distanceTop = totalOffsetStart;
       // this.__setDistance('bottom', totalOffsetEnd);
     }
