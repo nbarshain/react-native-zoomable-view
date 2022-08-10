@@ -1,7 +1,9 @@
 import React, { Component, createRef, RefObject } from 'react';
 import {
   Animated,
+  Dimensions,
   GestureResponderEvent,
+  I18nManager,
   InteractionManager,
   PanResponder,
   PanResponderGestureState,
@@ -37,6 +39,8 @@ const initialState = {
   originalPageX: null,
   originalPageY: null,
 } as ReactNativeZoomableViewState;
+
+const windowWidth = Dimensions.get('window').width;
 
 class ReactNativeZoomableView extends Component<
   ReactNativeZoomableViewProps,
@@ -1015,7 +1019,7 @@ class ReactNativeZoomableView extends Component<
             const animationDuration = this.props.doubleTapDelay;
             return (
               <AnimatedTouchFeedback
-                x={touch.x}
+                x={I18nManager.isRTL ? windowWidth - touch.x : touch.x}
                 y={touch.y}
                 key={touch.id}
                 animationDuration={animationDuration}
